@@ -1,0 +1,66 @@
+name: Build Ahk2Exe CN
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - cn-localization-initial
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      AHK_V1_VERSION: "1.1.37.02"
+      AHK2EXE_VERSION: "1.1.37.02a2"
+
+    steps:
+      - name: Checkout localized source
+        uses: actions/checkout@v4
+
+      - name: Download build dependencies
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ahkUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v$env:AHK_V1_VERSION/AutoHotkey_$env:AHK_V1_VERSION.zip"
+          $compilerUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe$env:AHK2EXE_VERSION/Ahk2Exe$env:AHK2EXE_VERSION.zip"
+
+          Invoke-WebRequest $ahkUrl -OutFile "$env:RUNNER_TEMP\ahk1.zip"
+          Invoke-WebRequest $compilerUrl -OutFile "$env:RUNNER_TEMP\ahk2exe.zip"
+
+          Expand-Archive "$env:RUNNER_TEMP\ahk1.zip" "$env:RUNNER_TEMP\ahk1" -Force
+          Expand-Archive "$env:RUNNER_TEMP\ahk2exe.zip" "$env:RUNNER_TEMP\compiler-official" -Force
+
+      - name: Compile localized Ahk2Exe
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $base = Get-ChildItem "$env:RUNNER_TEMP\ahk1" -Recurse -Filter AutoHotkeyU32.exe |
+            Select-Object -First 1
+          if (-not $base) { throw "AutoHotkeyU32.exe was not found." }
+
+          $compiler = Get-ChildItem "$env:RUNNER_TEMP\compiler-official" -Recurse -Filter Ahk2Exe.exe |
+            Select-Object -First 1
+          if (-not $compiler) { throw "Official Ahk2Exe.exe was not found." }
+
+          $out = "$env:RUNNER_TEMP\Ahk2Exe-CN.exe"
+          & $compiler.FullName /in "$pwd\Ahk2Exe.ahk" /out $out /base $base.FullName /compress 0 /silent verbose
+          if ($LASTEXITCODE -ne 0) { throw "Ahk2Exe compilation failed with exit code $LASTEXITCODE." }
+          if (-not (Test-Path $out)) { throw "Localized Ahk2Exe.exe was not produced." }
+
+          New-Item -ItemType Directory -Path "$pwd\dist\Compiler" -Force | Out-Null
+          Copy-Item (Join-Path $compiler.DirectoryName '*') "$pwd\dist\Compiler" -Recurse -Force
+          Copy-Item $out "$pwd\dist\Compiler\Ahk2Exe.exe" -Force
+
+      - name: Upload localized compiler
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ahk2Exe-CN
+          path: dist/Compiler
+          if-no-files-found: error
