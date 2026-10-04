@@ -50,8 +50,17 @@ jobs:
           if (-not $compiler) { throw "Official Ahk2Exe.exe was not found." }
 
           $out = "$env:RUNNER_TEMP\Ahk2Exe-CN.exe"
-          & $compiler.FullName /in "$pwd\Ahk2Exe.ahk" /out $out /base $base.FullName /compress 0 /silent verbose
-          if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "Ahk2Exe compilation failed with exit code $LASTEXITCODE." }
+          $args = @(
+            '/in', "$pwd\Ahk2Exe.ahk",
+            '/out', $out,
+            '/base', $base.FullName,
+            '/compress', '0',
+            '/silent', 'verbose'
+          )
+          $process = Start-Process -FilePath $compiler.FullName -ArgumentList $args -Wait -PassThru
+          if ($process.ExitCode -ne 0 -and -not (Test-Path $out)) {
+            throw "Ahk2Exe compilation failed with exit code $($process.ExitCode)."
+          }
           if (-not (Test-Path $out)) { throw "Localized Ahk2Exe.exe was not produced." }
 
           New-Item -ItemType Directory -Path "$pwd\dist\Compiler" -Force | Out-Null
