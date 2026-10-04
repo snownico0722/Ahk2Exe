@@ -6,6 +6,8 @@ on:
     branches:
       - master
       - cn-localization-initial
+    tags:
+      - "v*-cn*"
   pull_request:
 
 permissions:
@@ -17,36 +19,41 @@ jobs:
 
     env:
       AHK_V1_VERSION: "1.1.37.02"
+      AHK_V1_SHA256: "6f3663f7cdd25063c8c8728f5d9b07813ced8780522fd1f124ba539e2854215f"
       AHK2EXE_VERSION: "1.1.37.02a2"
+      AHK2EXE_SHA256: "c29b8c3a5124850d79fc9e66e2ca79677c377d7f31631ad3022ba159c5d9e3be"
 
     steps:
       - name: Checkout localized source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Download build dependencies
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $ahkUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v$env:AHK_V1_VERSION/AutoHotkey_$env:AHK_V1_VERSION.zip"
-          $compilerUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe$env:AHK2EXE_VERSION/Ahk2Exe$env:AHK2EXE_VERSION.zip"
+          $ahkZip = "$env:RUNNER_TEMP\ahk1.zip"
+          $compilerZip = "$env:RUNNER_TEMP\ahk2exe.zip"
 
-          Invoke-WebRequest $ahkUrl -OutFile "$env:RUNNER_TEMP\ahk1.zip"
-          Invoke-WebRequest $compilerUrl -OutFile "$env:RUNNER_TEMP\ahk2exe.zip"
+          Invoke-WebRequest "https://github.com/AutoHotkey/AutoHotkey/releases/download/v$env:AHK_V1_VERSION/AutoHotkey_$env:AHK_V1_VERSION.zip" -OutFile $ahkZip
+          Invoke-WebRequest "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe$env:AHK2EXE_VERSION/Ahk2Exe$env:AHK2EXE_VERSION.zip" -OutFile $compilerZip
 
-          Expand-Archive "$env:RUNNER_TEMP\ahk1.zip" "$env:RUNNER_TEMP\ahk1" -Force
-          Expand-Archive "$env:RUNNER_TEMP\ahk2exe.zip" "$env:RUNNER_TEMP\compiler-official" -Force
+          $ahkHash = (Get-FileHash $ahkZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $compilerHash = (Get-FileHash $compilerZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($ahkHash -ne $env:AHK_V1_SHA256) { throw "AutoHotkey v1 ZIP SHA256 mismatch: $ahkHash" }
+          if ($compilerHash -ne $env:AHK2EXE_SHA256) { throw "Ahk2Exe ZIP SHA256 mismatch: $compilerHash" }
+
+          Expand-Archive $ahkZip "$env:RUNNER_TEMP\ahk1" -Force
+          Expand-Archive $compilerZip "$env:RUNNER_TEMP\compiler-official" -Force
 
       - name: Compile localized Ahk2Exe
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
 
-          $base = Get-ChildItem "$env:RUNNER_TEMP\ahk1" -Recurse -Filter AutoHotkeyU32.exe |
-            Select-Object -First 1
+          $base = Get-ChildItem "$env:RUNNER_TEMP\ahk1" -Recurse -Filter AutoHotkeyU32.exe | Select-Object -First 1
           if (-not $base) { throw "AutoHotkeyU32.exe was not found." }
 
-          $compiler = Get-ChildItem "$env:RUNNER_TEMP\compiler-official" -Recurse -Filter Ahk2Exe.exe |
-            Select-Object -First 1
+          $compiler = Get-ChildItem "$env:RUNNER_TEMP\compiler-official" -Recurse -Filter Ahk2Exe.exe | Select-Object -First 1
           if (-not $compiler) { throw "Official Ahk2Exe.exe was not found." }
 
           $out = "$env:RUNNER_TEMP\Ahk2Exe-CN.exe"
@@ -66,10 +73,37 @@ jobs:
           New-Item -ItemType Directory -Path "$pwd\dist\Compiler" -Force | Out-Null
           Copy-Item (Join-Path $compiler.DirectoryName '*') "$pwd\dist\Compiler" -Recurse -Force
           Copy-Item $out "$pwd\dist\Compiler\Ahk2Exe.exe" -Force
+          Copy-Item "$pwd\COPYING" "$pwd\dist\Compiler\COPYING" -Force
 
       - name: Upload localized compiler
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: Ahk2Exe-CN
           path: dist/Compiler
           if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download built compiler
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: Ahk2Exe-CN
+          path: release
+
+      - name: Package release ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Compress-Archive -Path "$pwd\release\*" -DestinationPath "$pwd\Ahk2ExeCN.zip" -CompressionLevel Optimal
+
+      - name: Publish release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        with:
+          files: Ahk2ExeCN.zip
+          generate_release_notes: true
