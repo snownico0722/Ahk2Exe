@@ -6,10 +6,9 @@ on:
     branches:
       - master
       - cn-localization-initial
+      - "release/*"
     tags:
       - "v*-cn*"
-    branches:
-      - "release/*"
   pull_request:
 
 permissions:
