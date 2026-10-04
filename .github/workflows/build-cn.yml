@@ -51,7 +51,7 @@ jobs:
 
           $out = "$env:RUNNER_TEMP\Ahk2Exe-CN.exe"
           & $compiler.FullName /in "$pwd\Ahk2Exe.ahk" /out $out /base $base.FullName /compress 0 /silent verbose
-          if ($LASTEXITCODE -ne 0) { throw "Ahk2Exe compilation failed with exit code $LASTEXITCODE." }
+          if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "Ahk2Exe compilation failed with exit code $LASTEXITCODE." }
           if (-not (Test-Path $out)) { throw "Localized Ahk2Exe.exe was not produced." }
 
           New-Item -ItemType Directory -Path "$pwd\dist\Compiler" -Force | Out-Null
