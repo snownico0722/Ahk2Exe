@@ -1,6 +1,6 @@
 ﻿goto UpdateEnd                                ; If fall-into, skip to near end
 Update:
-Reqs:=[(wk:="AutoHotkey/Ahk2Exe") ",,,Ahk2Exe.exe", "TAC109/Mpress,,,Mpress.exe"
+Reqs:=[(wk:="snownico0722/Ahk2Exe") ",,,Ahk2Exe.exe", "TAC109/Mpress,,,Mpress.exe"
 , "UPX/UPX," (A_Is64bitOS?"64.zip":"32.zip") ",,Upx.exe", wk ",,2,BinMod.ahk"]
 A2D := A_ScriptDir "\"
 if !A_IsCompiled                               ; Compile Ahk2Exe to test updates
