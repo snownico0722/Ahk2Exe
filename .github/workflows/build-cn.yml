@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - master
-      - cn-localization-initial
       - "release/*"
     tags:
       - "v*-cn*"
@@ -57,6 +56,13 @@ jobs:
           $compiler = Get-ChildItem "$env:RUNNER_TEMP\compiler-official" -Recurse -Filter Ahk2Exe.exe | Select-Object -First 1
           if (-not $compiler) { throw "Official Ahk2Exe.exe was not found." }
 
+          if ($env:AHK2EXE_VERSION -notmatch '^\d+\.\d+\.\d+\.\d+(.*)$') {
+            throw "Unable to derive Ahk2Exe sub-version from $env:AHK2EXE_VERSION."
+          }
+          $subVersion = $Matches[1]
+          if (-not $subVersion) { throw "Ahk2Exe sub-version is empty." }
+          "SubVer := `"$subVersion`"" | Set-Content "$pwd\SubVer.ahk" -Encoding ASCII
+
           $out = "$env:RUNNER_TEMP\Ahk2Exe-CN.exe"
           $args = @(
             '/in', "$pwd\Ahk2Exe.ahk",
@@ -71,6 +77,11 @@ jobs:
           }
           if (-not (Test-Path $out)) { throw "Localized Ahk2Exe.exe was not produced." }
 
+          $strings = [System.Text.Encoding]::Unicode.GetString([System.IO.File]::ReadAllBytes($out))
+          if (-not $strings.Contains($env:AHK2EXE_VERSION)) {
+            throw "Compiled Ahk2Exe does not contain expected version $env:AHK2EXE_VERSION."
+          }
+
           New-Item -ItemType Directory -Path "$pwd\dist\Compiler" -Force | Out-Null
           Copy-Item (Join-Path $compiler.DirectoryName '*') "$pwd\dist\Compiler" -Recurse -Force
           Copy-Item $out "$pwd\dist\Compiler\Ahk2Exe.exe" -Force
@@ -84,7 +95,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref_name, 'release/')
+    if: startsWith(github.ref, 'refs/tags/') || (startsWith(github.ref_name, 'release/') && github.event.before == '0000000000000000000000000000000000000000')
     needs: build
     runs-on: windows-latest
     permissions:
