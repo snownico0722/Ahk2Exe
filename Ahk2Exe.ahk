@@ -755,7 +755,7 @@ Util_Status(s)       ;v Keep early status for GUI
 Util_Error(txt, exitcode, extra := "", extra1 := "", HourGlass := 1)
 {	global CLIMode, ExeFileTmp, SilentMode, AhkFile
 	if extra
-		txt .= "`n`n具体信息：`n" extra
+		txt .= "`n`n" (SilentMode ? "Namely:`n" : "具体信息：`n") extra
 	if extra1
 		txt .= "`n`n" extra1
 	Util_HideHourglass()
@@ -778,9 +778,9 @@ Util_Error(txt, exitcode, extra := "", extra1 := "", HourGlass := 1)
 		ExeFileTmp =
 	}
 	if (CLIMode && exitcode)
-	{	try FileAppend, 编译失败：%AhkFile%`n, **
+	{	try FileAppend, Failed to compile: %AhkFile%`n, **
 		catch
-			FileAppend, 编译失败：%AhkFile%`n, *
+			FileAppend, Failed to compile: %AhkFile%`n, *
 	}
 	Util_Status("Ready")
 	if exitcode
