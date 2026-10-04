@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - master
-      - cn-localization-initial
       - "release/*"
     tags:
       - "v*-cn*"
@@ -56,6 +55,79 @@ jobs:
 
           $compiler = Get-ChildItem "$env:RUNNER_TEMP\compiler-official" -Recurse -Filter Ahk2Exe.exe | Select-Object -First 1
           if (-not $compiler) { throw "Official Ahk2Exe.exe was not found." }
+
+          if ($env:AHK2EXE_VERSION -notmatch '^\d+\.\d+\.\d+\.\d+(.*)
+            '/in', "$pwd\Ahk2Exe.ahk",
+            '/out', $out,
+            '/base', $base.FullName,
+            '/compress', '0',
+            '/silent', 'verbose'
+          )
+          $process = Start-Process -FilePath $compiler.FullName -ArgumentList $args -Wait -PassThru
+          if ($process.ExitCode -ne 0 -and -not (Test-Path $out)) {
+            throw "Ahk2Exe compilation failed with exit code $($process.ExitCode)."
+          }
+          if (-not (Test-Path $out)) { throw "Localized Ahk2Exe.exe was not produced." }
+
+          $strings = [System.Text.Encoding]::Unicode.GetString([System.IO.File]::ReadAllBytes($out))
+          if (-not $strings.Contains($env:AHK2EXE_VERSION)) {
+            throw "Compiled Ahk2Exe does not contain expected version $env:AHK2EXE_VERSION."
+          }
+
+          New-Item -ItemType Directory -Path "$pwd\dist\Compiler" -Force | Out-Null
+          Copy-Item (Join-Path $compiler.DirectoryName '*') "$pwd\dist\Compiler" -Recurse -Force
+          Copy-Item $out "$pwd\dist\Compiler\Ahk2Exe.exe" -Force
+          Copy-Item "$pwd\COPYING" "$pwd\dist\Compiler\COPYING" -Force
+
+      - name: Upload localized compiler
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Ahk2Exe-CN
+          path: dist/Compiler
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/') || (startsWith(github.ref_name, 'release/') && github.event.before == '0000000000000000000000000000000000000000')
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Resolve release tag
+        id: release_meta
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag.StartsWith('release/')) { $tag = $tag.Substring(8) }
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Download built compiler
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: Ahk2Exe-CN
+          path: release
+
+      - name: Package release ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Compress-Archive -Path "$pwd\release\*" -DestinationPath "$pwd\Ahk2ExeCN.zip" -CompressionLevel Optimal
+
+      - name: Publish release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        with:
+          tag_name: ${{ steps.release_meta.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Ahk2Exe 中文版 ${{ steps.release_meta.outputs.tag }}
+          files: Ahk2ExeCN.zip
+          generate_release_notes: true
+) {
+            throw "Unable to derive Ahk2Exe sub-version from $env:AHK2EXE_VERSION."
+          }
+          $subVersion = $Matches[1]
+          if (-not $subVersion) { throw "Ahk2Exe sub-version is empty." }
+          "SubVer := `"$subVersion`"" | Set-Content "$pwd\SubVer.ahk" -Encoding ASCII
 
           $out = "$env:RUNNER_TEMP\Ahk2Exe-CN.exe"
           $args = @(
