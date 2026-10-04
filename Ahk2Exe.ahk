@@ -60,29 +60,29 @@ if (BinFiles.1 = SBDMes && !StopCDBin)
 	BinFileId := 1, LastIdG := FindBinFile(LastBinFile) - 1
 else BinFileId := FindBinFile(LastBinFile)
 
-ExeDfltMes := "(Default is script file, or any relevant compiler directive)"
-AllowMes0 := "A&llow Gui Shrinkage`tAlt+L"
-AllowMes1 := "Disa&llow Gui Shrinkage`tAlt+L"
-SaveMes   := "S&ave Script Settings As…`tCtrl+S"
+ExeDfltMes := "(默认使用脚本文件或相关编译器指令)"
+AllowMes0 := "允许缩小界面(&L)`tAlt+L"
+AllowMes1 := "禁止缩小界面(&L)`tAlt+L"
+SaveMes   := "脚本设置另存为(&A)…`tCtrl+S"
 
 Menu, FileMenu, Add, %AllowMes0%, Shrink
-Menu, FileMenu, Add, R&eset all Fields`tF5, Restart
-Menu, FileMenu, Add, Refresh Windows &Icons`tAlt+I, RefreshIcons
+Menu, FileMenu, Add, 重置所有字段(&R)`tF5, Restart
+Menu, FileMenu, Add, 刷新 Windows 图标(&I)`tAlt+I, RefreshIcons
 Menu, FileMenu, Add
 Menu, FileMenu, Add, %SaveMes%, SaveAsMenu
 if (!AhkFile)
 	Menu, FileMenu, Disable, %SaveMes%
-Menu, FileMenu, Add, &Convert`tAlt+C, Convert
+Menu, FileMenu, Add, 编译(&C)`tAlt+C, Convert
 Menu, FileMenu, Add
-Menu, FileMenu, Add, E&xit`tAlt+F4, GuiClose
-Menu, HelpMenu, Add, &Help`tF1, % Help0
+Menu, FileMenu, Add, 退出(&X)`tAlt+F4, GuiClose
+Menu, HelpMenu, Add, 帮助(&H)`tF1, % Help0
 RunWait "%ComSpec%" /c echo 1,,UseErrorLevel Hide 
 if !(ErrorLevel && Store && ComSpec) ;No update if Store S mode & ComSpec exists
-	Menu, HelpMenu, Add, Check for Updates...`tAlt+K, Update
+	Menu, HelpMenu, Add, 检查更新...`tAlt+K, Update
 Menu, HelpMenu, Add
-Menu, HelpMenu, Add, &About, About
-Menu, MenuBar,  Add, &File, :FileMenu
-Menu, MenuBar,  Add, &Help, :HelpMenu
+Menu, HelpMenu, Add, 关于(&A), About
+Menu, MenuBar,  Add, 文件(&F), :FileMenu
+Menu, MenuBar,  Add, 帮助(&H), :HelpMenu
 ;Gui, Font, s9, simsun                        ; To test overlapping GUI fields
 ;Gui, Font, , Segoe UI Variable               ; English default
 Gui, Menu, MenuBar
@@ -98,36 +98,36 @@ Gui, Add, Link, x275 y5 vHeading2,
 ©2011-2016 fincs
 ©2019-%A_Year% TAC109
 <a href="https://www.autohotkey.com">https://www.autohotkey.com</a>
-Note: Compiling does not guarantee source code protection.
+注意：编译并不能保证源代码得到保护。
 )
 Gui, Add, Text,     x11 y90 w556 h2 +0x1007 vTopLine
-Gui, Add, GroupBox, x11 yp10 w556 h80 cGreen vGroupA, Main Parameters
-Gui, Add, Text,     x17 yp20, &Source (script file)
+Gui, Add, GroupBox, x11 yp10 w556 h80 cGreen vGroupA, 主要参数
+Gui, Add, Text,     x17 yp20, 源文件(&S)（脚本文件）
 Gui, Add, Edit,   xp140 yp-4 w291 h23 ReadOnly vAhkFile, %AhkFile%
-Gui, Add, Button, xp296 yp w53 h23 gBrowseAhk vBtnAhkFile, &Browse
-Gui, Add, Text,     x17 yp34, &Destination (.exe file)
+Gui, Add, Button, xp296 yp w53 h23 gBrowseAhk vBtnAhkFile, 浏览(&B)
+Gui, Add, Text,     x17 yp34, 输出文件(&D)（.exe）
 Gui, Add, Edit,   xp140 yp-4 w291 h23 ReadOnly vExeFile1
 		, % Exefile ? ExeFile : ExeDfltMes
-Gui, Add, Button, xp296 yp w53 h23 gBrowseExe vBtnExeFile, B&rowse
-Gui, Add, Button,  xp58 yp w53 h23 gDefaultExe vBtnExeDefault, D&efault
-Gui, Add, GroupBox, x11 yp45 w556 h105 cGreen vGroupB, Options
-Gui, Add, Text,     x17 yp20, Custom &Icon (.ico file)
+Gui, Add, Button, xp296 yp w53 h23 gBrowseExe vBtnExeFile, 浏览(&R)
+Gui, Add, Button,  xp58 yp w53 h23 gDefaultExe vBtnExeDefault, 默认(&E)
+Gui, Add, GroupBox, x11 yp45 w556 h105 cGreen vGroupB, 选项
+Gui, Add, Text,     x17 yp20, 自定义图标(&I)（.ico）
 Gui, Add, Edit,   xp140 yp-4 w291 h23 ReadOnly vIcoFile, %IcoFile%
-Gui, Add, Button, xp296 yp w53 h23 gBrowseIco vBtnIcoFile, Br&owse
-Gui, Add, Button,  xp58 yp w53 h23 gDefaultIco vBtnIcoDefault, Def&ault
-Gui, Add, Text,     x17 yp34, Base File (.bin, .exe)
+Gui, Add, Button, xp296 yp w53 h23 gBrowseIco vBtnIcoFile, 浏览(&O)
+Gui, Add, Button,  xp58 yp w53 h23 gDefaultIco vBtnIcoDefault, 默认(&A)
+Gui, Add, Text,     x17 yp34, 基础文件（.bin、.exe）
 Gui, Add, DDL,    xp140 yp-2 w291 h23 R10 AltSubmit gBinChanged vBinFileId Choose%BinFileId%, %BinNames%
-Gui, Add, Button, xp296 yp w53 h23 gBrowseBin vBtnBinFile, Bro&wse
-Gui, Add, Text,     x17 yp32, Compress exe with
-Gui, Add, DDL, % "xp140 yp-2 w75 AltSubmit gCompress vUseMPress Choose" UseMPRESS+1, (none)|MPRESS|UPX
-Gui, Add, Text,   xp150 yp2 vEmbRes, Embedded Resource ID
+Gui, Add, Button, xp296 yp w53 h23 gBrowseBin vBtnBinFile, 浏览(&W)
+Gui, Add, Text,     x17 yp32, EXE 压缩方式
+Gui, Add, DDL, % "xp140 yp-2 w75 AltSubmit gCompress vUseMPress Choose" UseMPRESS+1, (无)|MPRESS|UPX
+Gui, Add, Text,   xp150 yp2 vEmbRes, 嵌入资源 ID
 gui, Add, ComboBox,x444 yp-2 w112 vResourceID, %LastResource%
-Gui, Add, Text,     x17 yp40, Convert to executable
+Gui, Add, Text,     x17 yp40, 编译为可执行文件
 Gui, Font, bold
-Gui, Add, Button, xp140 yp-4 w75 h23 Default gConvert vBtnConvert, &Convert
+Gui, Add, Button, xp140 yp-4 w75 h23 Default gConvert vBtnConvert, 编译(&C)
 Gui, Font, norm 
-Gui, Add, Text,   xp150 yp4 vSave, Save 'Options' as default
-Gui, Add, Button,  x444 yp-4 w53 h23 gSaveAsDefault vBtnSave, S&ave
+Gui, Add, Text,   xp150 yp4 vSave, 将“选项”保存为默认值
+Gui, Add, Button,  x444 yp-4 w53 h23 gSaveAsDefault vBtnSave, 保存(&A)
 Gui, Add, StatusBar,, Ready
 ;@Ahk2Exe-IgnoreBegin
 Gui, Add, Pic, x20 y4 w240 h77 vHeading1, %A_ScriptDir%\logo.png
@@ -135,7 +135,7 @@ Gui, Add, Pic, x20 y4 w240 h77 vHeading1, %A_ScriptDir%\logo.png
 /*@Ahk2Exe-Keep
 gosub AddPicture
 */
-Gui,Show,%LastWidth%,Ahk2Exe%b% for AutoHotkey v%VerG% -- Script to EXE Converter
+Gui,Show,%LastWidth%,Ahk2Exe%b% for AutoHotkey v%VerG% -- 脚本转 EXE 编译器
 GuiControl, Focus, vBtnConvert
 gosub compress
 gosub BinChanged
@@ -462,7 +462,7 @@ return
 
 BrowseBin:
 Gui, +OwnDialogs
-FileSelectFile, ov, 1, %LastBinDir%, Open Base File, Base files (*.bin;*.exe)
+FileSelectFile, ov, 1, %LastBinDir%, 打开基础文件, 基础文件 (*.bin;*.exe)
 if ErrorLevel
 	return
 SplitPath ov,, LastBinDir
@@ -484,21 +484,21 @@ Gui, +OwnDialogs
 Gui, Submit, NoHide
 BinFile := BinFiles[BinFileId], SaveAs := "", Util_Status("")
 FileSelectFile, SaveAs, S,% RegExReplace(AhkFile,"\.[^.]+$") "_Compile"
- , Save script settings As, *.ahk            ;^ Removes extension
+ , 脚本设置另存为, *.ahk            ;^ Removes extension
 If (SaveAs = "") or ErrorLevel
 	Return
 SaveAs .= SaveAs ~= "\.ahk$" ? "" : ".ahk"
 if FileExist(SaveAs)
-{	Buttons2 := Func("Buttons").Bind("&Overwrite", "&Append")
+{	Buttons2 := Func("Buttons").Bind("覆盖(&O)", "追加(&A)")
 	SetTimer % Buttons2, 50
-	MsgBox 35, Ahk2Exe Query, "%SaveAs%" already exists:
+	MsgBox 35, Ahk2Exe 提示, "%SaveAs%" 已存在：
 	IfMsgBox Cancel, return
 	IfMsgBox Yes,    FileDelete %SaveAs% ; Overwrite
 }
 if !(v := SubStr(AHKType(BinFile,0).Version,1,1))
 {	Buttons3 := Func("Buttons").Bind("V&1", "V&2")
 	SetTimer % Buttons3, 50
-	MsgBox 35, Ahk2Exe Query, Generate AutoHotkey source as:
+	MsgBox 35, Ahk2Exe 提示, 生成哪种 AutoHotkey 源码：
 	IfMsgBox Cancel, return
 	IfMsgBox Yes
 		v := 1
@@ -518,7 +518,7 @@ else FileAppend % "RunWait """ A_ScriptFullPath """`n  /in """ AhkFile """"
 	~="i)^\(default\)$|^\(reset list\)$"?"":"`n  /ResourceID """ ResourceID """")
 	. (BinFile = SBDMes ? "" : "`n  /base """ BinFile """")
 	. "`n  /compress " UseMpress-1 "`n`n", %SaveAs%
-Util_Status(ErrorLevel?"Failed saving script settings!":"Saved script settings")
+Util_Status(ErrorLevel?"保存脚本设置失败！":"脚本设置已保存")
 Return
 
 SetCDBin(FileName)
@@ -755,7 +755,7 @@ Util_Status(s)       ;v Keep early status for GUI
 Util_Error(txt, exitcode, extra := "", extra1 := "", HourGlass := 1)
 {	global CLIMode, ExeFileTmp, SilentMode, AhkFile
 	if extra
-		txt .= "`n`nNamely:`n" extra
+		txt .= "`n`n具体信息：`n" extra
 	if extra1
 		txt .= "`n`n" extra1
 	Util_HideHourglass()
@@ -766,10 +766,10 @@ Util_Error(txt, exitcode, extra := "", extra1 := "", HourGlass := 1)
 			FileAppend, %txt%, *
 	}	else
 	{	if exitcode
-			MsgBox, 16, Ahk2Exe Error, % txt
+			MsgBox, 16, Ahk2Exe 错误, % txt
 		else
-		{	MsgBox, 49, Ahk2Exe Warning, % txt (extra||extra1 ? ""
-			 : "`n`nPress 'OK' to continue, or 'Cancel' to abandon.")
+		{	MsgBox, 49, Ahk2Exe 警告, % txt (extra||extra1 ? ""
+			 : "`n`n按“确定”继续，或按“取消”放弃。")
 			IfMsgBox Cancel
 				exitcode := 2
 	}	}
@@ -778,9 +778,9 @@ Util_Error(txt, exitcode, extra := "", extra1 := "", HourGlass := 1)
 		ExeFileTmp =
 	}
 	if (CLIMode && exitcode)
-	{	try FileAppend, Failed to compile: %AhkFile%`n, **
+	{	try FileAppend, 编译失败：%AhkFile%`n, **
 		catch
-			FileAppend, Failed to compile: %AhkFile%`n, *
+			FileAppend, 编译失败：%AhkFile%`n, *
 	}
 	Util_Status("Ready")
 	if exitcode
